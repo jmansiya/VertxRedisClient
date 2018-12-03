@@ -4,7 +4,7 @@ import org.redisson.client.codec.JsonJacksonMapCodec;
 public class ExtendedJsonJacksonMapCodec extends JsonJacksonMapCodec {
 
     public ExtendedJsonJacksonMapCodec() {
-        super(String.class, Alumno.class);
+        super(String.class, Object.class);
     }
 
     @Override
