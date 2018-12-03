@@ -1,3 +1,4 @@
+import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -10,7 +11,9 @@ import org.redisson.api.RBucket;
 import org.redisson.api.RedissonClient;
 import org.redisson.client.codec.Codec;
 import org.redisson.client.codec.JsonJacksonMapCodec;
+import org.redisson.client.codec.StringCodec;
 import org.redisson.codec.JsonJacksonCodec;
+import org.redisson.codec.SerializationCodec;
 import org.redisson.config.Config;
 
 import java.util.Objects;
@@ -20,7 +23,8 @@ public class RedissonConfiguration {
 
     private RedissonClient getClienteRedis(){
         Config configuracionRedisClient = new Config();
-        configuracionRedisClient.setCodec(new JsonJacksonCodec(buildObjectMapper()));
+
+        configuracionRedisClient.setCodec(new ExtendedJsonJacksonMapCodec());
         configuracionRedisClient.useSingleServer()
                 .setAddress("redis://127.0.0.1:6379");
 
@@ -52,11 +56,13 @@ public class RedissonConfiguration {
     public Alumno getValue(String key){
         RedissonClient clienteRedis = this.getClienteRedis();
         Alumno alumno = null;
+        ObjectMapper mapper = new ObjectMapper();
 
         try{
             RBucket<Alumno> bucketAlumno = clienteRedis.getBucket(key);
-            alumno = bucketAlumno.get();
+            Object objeto = bucketAlumno.get();
 
+            alumno = mapper.convertValue(objeto, Alumno.class);
             if (Objects.nonNull(alumno.getNombre())) {
                 System.out.println("Alumno recuperado: " + alumno.toString());
             } else {
@@ -72,23 +78,20 @@ public class RedissonConfiguration {
         return alumno;
     }
 
+    /*
     private ObjectMapper buildObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(MapperFeature.DEFAULT_VIEW_INCLUSION, true);
         mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         mapper.disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
-
+        mapper.
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         mapper.setVisibility(mapper.getSerializationConfig().getDefaultVisibilityChecker()
                 .withFieldVisibility(JsonAutoDetect.Visibility.ANY).withGetterVisibility(JsonAutoDetect.Visibility.NONE)
                 .withSetterVisibility(JsonAutoDetect.Visibility.NONE).withCreatorVisibility(JsonAutoDetect.Visibility.NONE));
         mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
-        mapper.addMixIn(Throwable.class, JsonJacksonCodec.ThrowableMixIn.class);
-
-        mapper.findAndRegisterModules();
 
         return mapper;
-    }
+    } */
 }
